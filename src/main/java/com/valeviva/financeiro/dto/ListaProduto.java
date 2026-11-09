@@ -7,7 +7,7 @@ public record ListaProduto (
         String nome,
         String descricao,
         double preco,
-        int quantidadeEstoque,
+        int quantidade_estoque,
         String categoria
 ) {
     public ListaProduto(Produto produto) {
