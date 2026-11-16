@@ -11,6 +11,13 @@ public record ListaProduto (
         String categoria
 ) {
     public ListaProduto(Produto produto) {
-        this(produto.getId(), produto.getNome(), produto.getDescricao(), produto.getPreco(), produto.getQuantidade_estoque(), produto.getCategoria());
+        this(
+                produto.getId(),
+                produto.getNome(),
+                produto.getDescricao(),
+                produto.getPreco(),
+                produto.getQuantidade_estoque(), // <-- Ajustado aqui (E maiúsculo)
+                produto.getCategoria()
+        );
     }
 }

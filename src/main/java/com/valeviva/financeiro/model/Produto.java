@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity(name = "Produto")
 @Table(name = "produto")
 @NoArgsConstructor
@@ -17,11 +20,22 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String nome;
     private String descricao;
     private double preco;
     private int quantidade_estoque;
     private String categoria;
+
+
+    @ManyToMany
+    @JoinTable(
+            name = "produto_materia_prima",
+            joinColumns = @JoinColumn(name = "produto_id"),
+            inverseJoinColumns = @JoinColumn(name = "materia_prima_id")
+    )
+    private List<MateriaPrima> materiasPrimas = new ArrayList<>();
+    // ==========================================
 
     public Produto(CadastroProduto produto){
         this.nome = produto.nome();
@@ -30,5 +44,4 @@ public class Produto {
         this.quantidade_estoque = produto.quantidade_estoque();
         this.categoria = produto.categoria();
     }
-
 }
