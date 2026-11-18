@@ -23,7 +23,7 @@ public class Fornecedor {
     private String email;
     private String telefone;
     private int prazo_entrega_dias;
-    private boolean is_ativo;
+    private boolean is_ativo = true;
 
     public Fornecedor(CadastroFornecedor fornecedor) {
         this.razao_social = fornecedor.razao_social();
