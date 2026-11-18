@@ -1,6 +1,7 @@
 package com.valeviva.financeiro.model;
 
 import com.valeviva.financeiro.dto.CadastroProduto;
+import com.valeviva.financeiro.enums.TipoProduto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,12 +21,17 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String nome;
+    private String codigo;
     private String descricao;
+    private TipoProduto tipo;
+    private String unidade; //UN, KG, TON
     private double preco;
     private int quantidade_estoque;
-    private String categoria;
+    private int estoque_minimo;
+    private String registro_anvisa;
+    private String vencimento_anvisa;
+    private boolean is_ativo;
 
 
     @ManyToMany
@@ -39,9 +45,15 @@ public class Produto {
 
     public Produto(CadastroProduto produto){
         this.nome = produto.nome();
+        this.codigo = produto.codigo();
         this.descricao = produto.descricao();
+        this.tipo = produto.tipo();
+        this.unidade = produto.unidade();
         this.preco = produto.preco();
         this.quantidade_estoque = produto.quantidade_estoque();
-        this.categoria = produto.categoria();
+        this.estoque_minimo = produto.estoque_minimo();
+        this.registro_anvisa = produto.registro_anvisa();
+        this.vencimento_anvisa = produto.vencimento_anvisa();
+        this.is_ativo = produto.is_ativo();
     }
 }
