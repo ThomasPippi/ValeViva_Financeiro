@@ -24,6 +24,7 @@ public class Produto {
     private String nome;
     private String codigo;
     private String descricao;
+    @Enumerated(EnumType.STRING)
     private TipoProduto tipo;
     private String unidade; //UN, KG, TON
     private double preco;
