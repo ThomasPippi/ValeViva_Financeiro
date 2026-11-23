@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,13 +26,15 @@ public class Produto {
     private String nome;
     private String codigo;
     private String descricao;
+    @Enumerated(EnumType.STRING)
     private TipoProduto tipo;
     private String unidade; //UN, KG, TON
-    private double preco;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal preco;
     private int quantidade_estoque;
     private int estoque_minimo;
     private String registro_anvisa;
-    private String vencimento_anvisa;
+    private LocalDate vencimento_anvisa;
     private boolean is_ativo;
 
 

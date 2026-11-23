@@ -7,5 +7,5 @@ create table fornecedor(
     telefone varchar(20),
     contato varchar(100),
     prazo_entrega_dias int,
-    ativo boolean not null default true
-)
+    is_ativo boolean not null default true
+);
