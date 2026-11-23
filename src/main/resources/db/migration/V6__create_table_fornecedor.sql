@@ -8,4 +8,4 @@ create table fornecedor(
     contato varchar(100),
     prazo_entrega_dias int,
     ativo boolean not null default true
-)
+);

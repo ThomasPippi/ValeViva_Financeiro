@@ -7,4 +7,4 @@ create table pedidoCompra(
     status varchar(20) not null,
     ordem_producao_id BIGINT,
     CONSTRAINT fk_pedido_fornecedor FOREIGN KEY (fornecedor_id) REFERENCES fornecedor (id)
-)
+);

@@ -7,4 +7,4 @@ create table item_pedido_compra (
     quantidade_recebida decimal(15,4),
     CONSTRAINT fk_item_pedido FOREIGN KEY (pedido_compra_id) REFERENCES pedidoCompra (id),
     CONSTRAINT fk_item_produto FOREIGN KEY (produto_id) REFERENCES produto (id)
-)
+);
