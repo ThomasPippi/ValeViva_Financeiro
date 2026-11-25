@@ -27,16 +27,19 @@ public class ExpedicaoService {
     private final ExpedicaoRepository expedicaoRepository;
     private final SaldoEstoqueRepository saldoRepository;
     private final MovimentacaoEstoqueRepository movimentacaoRepository;
+    private final LoteService loteService;
 
     // Construtor que recebe os repositórios
     public ExpedicaoService(
             ExpedicaoRepository expedicaoRepository,
             SaldoEstoqueRepository saldoRepository,
-            MovimentacaoEstoqueRepository movimentacaoRepository) {
+            MovimentacaoEstoqueRepository movimentacaoRepository,
+            LoteService loteService) {
 
         this.expedicaoRepository = expedicaoRepository;
         this.saldoRepository = saldoRepository;
         this.movimentacaoRepository = movimentacaoRepository;
+        this.loteService = loteService;
     }
 
     // Registra uma nova expedição de produtos
@@ -54,6 +57,9 @@ public class ExpedicaoService {
                     "O destino da expedição deve ser informado."
             );
         }
+
+        // Bloqueia (HTTP 422) lote vencido, não APROVADO na qualidade ou com ANVISA vencida
+        loteService.validarLoteParaExpedicao(loteId);
 
         // Procura o saldo do produto no lote informado
         SaldoEstoque saldo = saldoRepository

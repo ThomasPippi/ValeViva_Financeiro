@@ -6,6 +6,7 @@ import com.valeviva.financeiro.model.OrdemProducao;
 import com.valeviva.financeiro.model.Produto;
 import com.valeviva.financeiro.repository.OrdemProducaoRepository;
 import com.valeviva.financeiro.repository.ProdutoRepository;
+import com.valeviva.financeiro.service.OrdemProducaoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,9 @@ public class OrdemProducaoController {
 
     @Autowired
     private ProdutoRepository produtoRepository;
+
+    @Autowired
+    private OrdemProducaoService ordemProducaoService;
 
     @PostMapping
     @Transactional
@@ -47,5 +51,10 @@ public class OrdemProducaoController {
     public ResponseEntity<List<ListaOrdemProducao>> listar() {
         List<ListaOrdemProducao> lista = repository.findAll().stream().map(ListaOrdemProducao::new).toList();
         return ResponseEntity.ok(lista);
+    }
+
+    @PostMapping("/{id}/confirmar-materiais")
+    public ResponseEntity<OrdemProducaoService.OrdemProducaoDetalheDTO> confirmarMateriais(@PathVariable Long id) {
+        return ResponseEntity.ok(ordemProducaoService.confirmarMateriais(id));
     }
 }
