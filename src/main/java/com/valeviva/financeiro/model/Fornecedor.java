@@ -28,7 +28,8 @@ public class Fornecedor {
     public Fornecedor(CadastroFornecedor fornecedor) {
         this.razao_social = fornecedor.razao_social();
         this.nome_fantasia = fornecedor.nome_fantasia();
-        this.cnpj = fornecedor.cnpj();
+        // guarda só os números do CNPJ (a coluna no banco é char(14))
+        this.cnpj = fornecedor.cnpj().replaceAll("[^0-9]", "");
         this.email = fornecedor.email();
         this.telefone = fornecedor.telefone();
         this.prazo_entrega_dias = fornecedor.prazo_entrega_dias();

@@ -3,6 +3,7 @@ package com.valeviva.financeiro.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,12 +27,18 @@ public class OrdemProducao {
 
     private LocalDateTime dataCriacao;
 
+    private String status;
+
+    private LocalDate prazo;
+
+    private Integer prioridade;
+
 
 
     public OrdemProducao(Produto produto, Integer quantidade) {
         this.produto = produto;
         this.quantidade = quantidade;
         this.dataCriacao = LocalDateTime.now();
-
+        this.status = "EMITIDA";
     }
 }

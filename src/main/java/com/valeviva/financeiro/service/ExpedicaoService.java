@@ -2,11 +2,14 @@
 package com.valeviva.financeiro.service;
 
 // Importa as entidades utilizadas
+import com.valeviva.financeiro.enums.TipoMovimentacao;
 import com.valeviva.financeiro.model.Expedicao;
+import com.valeviva.financeiro.model.MovimentacaoEstoque;
 import com.valeviva.financeiro.model.SaldoEstoque;
 
 // Importa os repositórios
 import com.valeviva.financeiro.repository.ExpedicaoRepository;
+import com.valeviva.financeiro.repository.MovimentacaoEstoqueRepository;
 import com.valeviva.financeiro.repository.SaldoEstoqueRepository;
 
 // Importações do Spring
@@ -23,14 +26,17 @@ public class ExpedicaoService {
     // Repositórios responsáveis pelo acesso ao banco de dados
     private final ExpedicaoRepository expedicaoRepository;
     private final SaldoEstoqueRepository saldoRepository;
+    private final MovimentacaoEstoqueRepository movimentacaoRepository;
 
     // Construtor que recebe os repositórios
     public ExpedicaoService(
             ExpedicaoRepository expedicaoRepository,
-            SaldoEstoqueRepository saldoRepository) {
+            SaldoEstoqueRepository saldoRepository,
+            MovimentacaoEstoqueRepository movimentacaoRepository) {
 
         this.expedicaoRepository = expedicaoRepository;
         this.saldoRepository = saldoRepository;
+        this.movimentacaoRepository = movimentacaoRepository;
     }
 
     // Registra uma nova expedição de produtos
@@ -73,7 +79,20 @@ public class ExpedicaoService {
         expedicao.setUsuarioId(usuarioId);
 
         // Salva a expedição no banco de dados
-        return expedicaoRepository.save(expedicao);
+        Expedicao salva = expedicaoRepository.save(expedicao);
+
+        // Registra a saída no histórico de movimentações
+        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
+        movimentacao.setTipo(TipoMovimentacao.SAIDA);
+        movimentacao.setProduto(saldo.getProduto());
+        movimentacao.setLoteId(loteId);
+        movimentacao.setQuantidade(quantidade);
+        movimentacao.setUsuarioId(usuarioId);
+        movimentacao.setOrigemDestino(destino);
+        movimentacao.setExpedicaoId(salva.getId());
+        movimentacaoRepository.save(movimentacao);
+
+        return salva;
     }
 }
 

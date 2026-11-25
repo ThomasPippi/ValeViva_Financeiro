@@ -1,6 +1,7 @@
 package com.valeviva.financeiro.controllers;
 
 import com.valeviva.financeiro.dto.CadastroOrdemProducao;
+import com.valeviva.financeiro.dto.ListaOrdemProducao;
 import com.valeviva.financeiro.model.OrdemProducao;
 import com.valeviva.financeiro.model.Produto;
 import com.valeviva.financeiro.repository.OrdemProducaoRepository;
@@ -35,13 +36,16 @@ public class OrdemProducaoController {
         }
 
         OrdemProducao op = new OrdemProducao(produto, dto.quantidade());
+        op.setPrazo(dto.prazo());
+        op.setPrioridade(dto.prioridade());
         OrdemProducao novaOp = repository.save(op);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(novaOp);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ListaOrdemProducao(novaOp));
     }
 
     @GetMapping
-    public ResponseEntity<List<OrdemProducao>> listar() {
-        return ResponseEntity.ok(repository.findAll());
+    public ResponseEntity<List<ListaOrdemProducao>> listar() {
+        List<ListaOrdemProducao> lista = repository.findAll().stream().map(ListaOrdemProducao::new).toList();
+        return ResponseEntity.ok(lista);
     }
 }
