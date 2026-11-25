@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+<<<<<<< HEAD
+=======
+import org.springframework.web.bind.annotation.RequestBody;
+>>>>>>> 7bb94aec591c99e543c810d90cde183cb02baceb
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +29,11 @@ public class FornecedorController {
     }
 
     @PostMapping
+<<<<<<< HEAD
     public void newFornecedor(CadastroFornecedor fornecedor) {
+=======
+    public void newFornecedor(@RequestBody CadastroFornecedor fornecedor) {
+>>>>>>> 7bb94aec591c99e543c810d90cde183cb02baceb
         fornecedorRepository.save(new Fornecedor(fornecedor));
     }
 }
