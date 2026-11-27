@@ -60,4 +60,18 @@ public class Produto {
         this.vencimento_anvisa = produto.vencimento_anvisa();
         this.is_ativo = produto.is_ativo();
     }
+
+    public void atualizar(CadastroProduto produto) {
+        this.nome = produto.nome();
+        this.codigo = produto.codigo();
+        this.descricao = produto.descricao();
+        this.tipo = produto.tipo();
+        this.unidade = produto.unidade();
+        this.preco = produto.preco();
+        this.quantidade_estoque = produto.quantidade_estoque();
+        this.estoque_minimo = produto.estoque_minimo();
+        this.registro_anvisa = produto.registro_anvisa();
+        this.vencimento_anvisa = produto.vencimento_anvisa();
+        this.is_ativo = produto.is_ativo();
+    }
 }

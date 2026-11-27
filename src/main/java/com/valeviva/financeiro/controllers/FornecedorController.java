@@ -7,11 +7,10 @@ import com.valeviva.financeiro.repository.FornecedorRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/fornecedor")
@@ -28,5 +27,27 @@ public class FornecedorController {
     @PostMapping
     public void newFornecedor(@RequestBody CadastroFornecedor fornecedor) {
         fornecedorRepository.save(new Fornecedor(fornecedor));
+    }
+
+    @PutMapping("{id}")
+    @Transactional
+    public ResponseEntity<?> atualizarFornecedor(@PathVariable Long id, @RequestBody CadastroFornecedor dados) {
+        Fornecedor fornecedor = fornecedorRepository.findById(id).orElse(null);
+        if (fornecedor == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Fornecedor não encontrado.");
+        }
+        fornecedor.atualizar(dados);
+        return ResponseEntity.ok(new ListaFornecedor(fornecedor));
+    }
+
+    // Apaga o fornecedor; o banco apaga em cascata os pedidos de compra dele (migration V16)
+    @DeleteMapping("{id}")
+    @Transactional
+    public ResponseEntity<?> excluirFornecedor(@PathVariable Long id) {
+        if (!fornecedorRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Fornecedor não encontrado.");
+        }
+        fornecedorRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -35,4 +35,14 @@ public class Fornecedor {
         this.prazo_entrega_dias = fornecedor.prazo_entrega_dias();
         this.is_ativo = fornecedor.is_ativo();
     }
+
+    public void atualizar(CadastroFornecedor fornecedor) {
+        this.razao_social = fornecedor.razao_social();
+        this.nome_fantasia = fornecedor.nome_fantasia();
+        this.cnpj = fornecedor.cnpj().replaceAll("[^0-9]", "");
+        this.email = fornecedor.email();
+        this.telefone = fornecedor.telefone();
+        this.prazo_entrega_dias = fornecedor.prazo_entrega_dias();
+        this.is_ativo = fornecedor.is_ativo();
+    }
 }
