@@ -1,5 +1,6 @@
 package com.valeviva.financeiro.service;
 
+import com.valeviva.financeiro.enums.StatusOrdem;
 import com.valeviva.financeiro.model.MateriaPrima;
 import com.valeviva.financeiro.model.OrdemProducao;
 import com.valeviva.financeiro.model.Produto;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,53 +60,65 @@ public class OrdemProducaoService {
         OrdemProducao op = ordemProducaoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ordem de produção não encontrada."));
 
+        String statusAtual = op.getStatus() != null ? op.getStatus() : "EMITIDA";
+        if (!"EMITIDA".equals(statusAtual) && !StatusOrdem.AGUARDANDO_MATERIAIS.name().equals(statusAtual)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível confirmar materiais para ordem com status " + statusAtual + "."
+            );
+        }
+
         List<ItemNecessidadeDTO> faltas = calcularFaltas(op.getProduto(), op.getQuantidade());
 
         if (!faltas.isEmpty()) {
-            op.setStatus("AGUARDANDO_MATERIAIS");
+            op.setStatus(StatusOrdem.AGUARDANDO_MATERIAIS.name());
             ordemProducaoRepository.save(op);
             return toDetalheDTO(op, faltas);
         }
 
-        // Baixa os insumos conforme quantidade_necessaria * quantidade da OP
+        int qtdOp = op.getQuantidade() != null ? op.getQuantidade() : 0;
+        BigDecimal qtdOpBd = BigDecimal.valueOf(qtdOp);
+
         for (MateriaPrima mp : op.getProduto().getMateriasPrimas()) {
-            double qtdPorUnidade = buscarQuantidadeNecessaria(op.getProduto().getId(), mp.getId());
-            double necessario = qtdPorUnidade * op.getQuantidade();
-            double novoSaldo = Math.max(0.0, mp.getQuantidadeEstoque() - necessario);
-            mp.setQuantidadeEstoque(novoSaldo);
+            BigDecimal qtdPorUnidade = buscarQuantidadeNecessaria(op.getProduto().getId(), mp.getId());
+            BigDecimal necessario = qtdPorUnidade.multiply(qtdOpBd);
+            BigDecimal disponivel = BigDecimal.valueOf(mp.getQuantidadeEstoque());
+            BigDecimal novoSaldo = disponivel.subtract(necessario).max(BigDecimal.ZERO);
+
+            mp.setQuantidadeEstoque(novoSaldo.doubleValue());
             materiaPrimaRepository.save(mp);
         }
 
-        op.setStatus("LIBERADA");
+        op.setStatus(StatusOrdem.LIBERADA.name());
         OrdemProducao salva = ordemProducaoRepository.save(op);
         return toDetalheDTO(salva, List.of());
     }
 
     private List<ItemNecessidadeDTO> calcularFaltas(Produto produto, Integer quantidadeOp) {
         List<ItemNecessidadeDTO> faltas = new ArrayList<>();
-        int qtd = quantidadeOp != null ? quantidadeOp : 0;
+        BigDecimal qtdOpBd = BigDecimal.valueOf(quantidadeOp != null ? quantidadeOp : 0);
 
         for (MateriaPrima mp : produto.getMateriasPrimas()) {
-            double qtdPorUnidade = buscarQuantidadeNecessaria(produto.getId(), mp.getId());
-            double necessario = qtdPorUnidade * qtd;
-            double disponivel = mp.getQuantidadeEstoque();
-            double falta = Math.max(0.0, necessario - disponivel);
+            BigDecimal qtdPorUnidade = buscarQuantidadeNecessaria(produto.getId(), mp.getId());
+            BigDecimal necessario = qtdPorUnidade.multiply(qtdOpBd);
+            BigDecimal disponivel = BigDecimal.valueOf(mp.getQuantidadeEstoque());
+            BigDecimal falta = necessario.subtract(disponivel).max(BigDecimal.ZERO);
 
-            if (falta > 0) {
+            if (falta.compareTo(BigDecimal.ZERO) > 0) {
                 faltas.add(new ItemNecessidadeDTO(
                         mp.getId(),
                         "MP-" + mp.getId(),
                         mp.getNome(),
-                        necessario,
-                        disponivel,
-                        falta
+                        necessario.doubleValue(),
+                        disponivel.doubleValue(),
+                        falta.doubleValue()
                 ));
             }
         }
         return faltas;
     }
 
-    private double buscarQuantidadeNecessaria(Long produtoId, Long materiaPrimaId) {
+    private BigDecimal buscarQuantidadeNecessaria(Long produtoId, Long materiaPrimaId) {
         List<?> rows = entityManager.createNativeQuery(
                         "SELECT quantidade_necessaria FROM produto_materia_prima WHERE produto_id = ?1 AND materia_prima_id = ?2")
                 .setParameter(1, produtoId)
@@ -112,9 +126,12 @@ public class OrdemProducaoService {
                 .getResultList();
 
         if (rows.isEmpty() || rows.get(0) == null) {
-            return 1.0;
+            return BigDecimal.ONE;
         }
-        return ((Number) rows.get(0)).doubleValue();
+        if (rows.get(0) instanceof BigDecimal bd) {
+            return bd;
+        }
+        return BigDecimal.valueOf(((Number) rows.get(0)).doubleValue());
     }
 
     private OrdemProducaoDetalheDTO toDetalheDTO(OrdemProducao op, List<ItemNecessidadeDTO> faltas) {

@@ -9,6 +9,7 @@ import com.valeviva.financeiro.model.Produto;
 import com.valeviva.financeiro.repository.FornecedorRepository;
 import com.valeviva.financeiro.repository.PedidoCompraRepository;
 import com.valeviva.financeiro.repository.ProdutoRepository;
+import com.valeviva.financeiro.service.EstoqueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,9 @@ public class PedidoCompraController {
 
     @Autowired
     private PedidoCompraRepository pedidoCompraRepository;
+
+    @Autowired
+    private EstoqueService estoqueService;
 
     @Autowired
     private FornecedorRepository fornecedorRepository;
@@ -64,7 +68,6 @@ public class PedidoCompraController {
         pedido.setData_prometida(dados.data_prometida());
         pedido.setStatus(StatusPedidoCompra.ABERTO);
 
-        // se não mandar a data do pedido, usa a data de hoje
         if (dados.data_pedido() != null) {
             pedido.setData_pedido(dados.data_pedido());
         } else {
@@ -102,19 +105,31 @@ public class PedidoCompraController {
             return ResponseEntity.badRequest().body("Só é possível receber pedidos em aberto.");
         }
 
-        for (ItemRecebido recebido : dados.itens()) {
-            // procura o item dentro do pedido
-            for (ItemPedidoCompra item : pedido.getItens()) {
-                if (item.getId().equals(recebido.item_id())) {
-                    BigDecimal quantidade = recebido.quantidade_recebida();
-                    if (quantidade == null) {
-                        quantidade = BigDecimal.ZERO;
-                    }
-                    item.setQuantidade_recebida(quantidade);
+        if (dados.itens() != null) {
+            for (ItemRecebido recebido : dados.itens()) {
+                for (ItemPedidoCompra item : pedido.getItens()) {
+                    if (item.getId().equals(recebido.item_id())) {
+                        BigDecimal quantidade = recebido.quantidade_recebida();
+                        if (quantidade == null) {
+                            quantidade = BigDecimal.ZERO;
+                        }
+                        if (quantidade.compareTo(BigDecimal.ZERO) < 0) {
+                            return ResponseEntity.badRequest()
+                                    .body("Quantidade recebida não pode ser negativa.");
+                        }
 
-                    // soma o que chegou no estoque do produto
-                    Produto produto = item.getProduto();
-                    produto.setQuantidade_estoque(produto.getQuantidade_estoque() + quantidade.intValue());
+                        item.setQuantidade_recebida(quantidade);
+
+                        if (quantidade.compareTo(BigDecimal.ZERO) > 0) {
+                            estoqueService.registrarEntrada(
+                                    item.getProduto().getId(),
+                                    1L,
+                                    quantidade,
+                                    1L,
+                                    "Pedido de compra #" + pedido.getId()
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -126,6 +141,7 @@ public class PedidoCompraController {
         }
         pedido.setStatus(StatusPedidoCompra.RECEBIDO);
 
-        return ResponseEntity.ok(new ListaPedidoCompra(pedido));
+        PedidoCompra salvo = pedidoCompraRepository.save(pedido);
+        return ResponseEntity.ok(new ListaPedidoCompra(salvo));
     }
 }

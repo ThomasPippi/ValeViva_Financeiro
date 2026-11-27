@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/expedicoes")
@@ -30,6 +31,9 @@ public class ExpedicaoController {
                     dados.usuarioId()
             );
             return ResponseEntity.status(HttpStatus.CREATED).body(expedicao);
+        } catch (ResponseStatusException e) {
+            String mensagem = e.getReason() != null ? e.getReason() : "Operação não permitida.";
+            return ResponseEntity.status(e.getStatusCode()).body(mensagem);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

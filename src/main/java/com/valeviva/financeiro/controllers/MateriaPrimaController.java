@@ -17,21 +17,48 @@ public class MateriaPrimaController {
     @Autowired
     private MateriaPrimaRepository repository;
 
-    // Endpoint para Cadastrar (POST)
     @PostMapping
     public ResponseEntity<MateriaPrima> cadastrar(@RequestBody CadastroMateriaPrima dto) {
-        // Cria a entidade usando o construtor com o DTO e salva no banco
         MateriaPrima materiaPrima = new MateriaPrima(dto);
         MateriaPrima novaMateriaPrima = repository.save(materiaPrima);
-
-        // Retorna status 201 (Created) com o objeto salvo
         return ResponseEntity.status(HttpStatus.CREATED).body(novaMateriaPrima);
     }
 
-    // Endpoint para Listar (GET)
     @GetMapping
     public ResponseEntity<List<MateriaPrima>> listar() {
-        List<MateriaPrima> lista = repository.findAll();
-        return ResponseEntity.ok(lista); // Retorna status 200 (OK) com a lista
+        return ResponseEntity.ok(repository.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MateriaPrima> buscarPorId(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MateriaPrima> atualizar(
+            @PathVariable Long id,
+            @RequestBody CadastroMateriaPrima dto
+    ) {
+        return repository.findById(id)
+                .map(mp -> {
+                    mp.setNome(dto.nome());
+                    mp.setDescricao(dto.descricao());
+                    mp.setCustoUnitario(dto.custoUnitario());
+                    mp.setQuantidadeEstoque(dto.quantidadeEstoque());
+                    mp.setUnidadeMedida(dto.unidadeMedida());
+                    return ResponseEntity.ok(repository.save(mp));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

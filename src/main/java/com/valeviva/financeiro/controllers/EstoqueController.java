@@ -3,8 +3,10 @@ package com.valeviva.financeiro.controllers;
 import com.valeviva.financeiro.dto.CadastroEntradaEstoque;
 import com.valeviva.financeiro.dto.ListaMovimentacaoEstoque;
 import com.valeviva.financeiro.dto.ListaSaldoEstoque;
+import com.valeviva.financeiro.model.Lote;
 import com.valeviva.financeiro.model.MovimentacaoEstoque;
 import com.valeviva.financeiro.model.SaldoEstoque;
+import com.valeviva.financeiro.repository.LoteRepository;
 import com.valeviva.financeiro.repository.MovimentacaoEstoqueRepository;
 import com.valeviva.financeiro.repository.SaldoEstoqueRepository;
 import com.valeviva.financeiro.service.EstoqueService;
@@ -30,12 +32,21 @@ public class EstoqueController {
     @Autowired
     private MovimentacaoEstoqueRepository movimentacaoRepository;
 
+    @Autowired
+    private LoteRepository loteRepository;
+
     @GetMapping("/saldos")
     public List<ListaSaldoEstoque> listarSaldos() {
-        return saldoRepository.findAll().stream().map(ListaSaldoEstoque::new).toList();
+        return saldoRepository.findAll().stream()
+                .map(saldo -> new ListaSaldoEstoque(
+                        saldo,
+                        saldo.getLoteId() != null
+                                ? loteRepository.findById(saldo.getLoteId()).orElse(null)
+                                : null
+                ))
+                .toList();
     }
 
-    // filtros opcionais: data de início, data de fim e código/nome do produto
     @GetMapping("/movimentacoes")
     public List<ListaMovimentacaoEstoque> listarMovimentacoes(
             @RequestParam(required = false) LocalDate inicio,
@@ -77,9 +88,43 @@ public class EstoqueController {
                     dados.usuarioId(),
                     dados.origemDestino()
             );
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ListaSaldoEstoque(saldo));
+            Lote lote = loteRepository.findById(dados.loteId()).orElse(null);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ListaSaldoEstoque(saldo, lote));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PutMapping("/saldos/{id}")
+    public ResponseEntity<?> atualizarSaldo(
+            @PathVariable Long id,
+            @RequestBody CadastroEntradaEstoque dados) {
+
+        return saldoRepository.findById(id)
+                .map(saldo -> {
+                    if (dados.quantidade() != null) {
+                        saldo.setQuantidade(dados.quantidade());
+                    }
+                    if (dados.loteId() != null) {
+                        saldo.setLoteId(dados.loteId());
+                    }
+                    SaldoEstoque salvo = saldoRepository.save(saldo);
+                    Lote lote = salvo.getLoteId() != null
+                            ? loteRepository.findById(salvo.getLoteId()).orElse(null)
+                            : null;
+                    return ResponseEntity.<Object>ok(new ListaSaldoEstoque(salvo, lote));
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Saldo de estoque não encontrado."));
+    }
+
+    @DeleteMapping("/saldos/{id}")
+    public ResponseEntity<?> excluirSaldo(@PathVariable Long id) {
+        if (!saldoRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Saldo de estoque não encontrado.");
+        }
+        saldoRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
